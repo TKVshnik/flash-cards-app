@@ -3,6 +3,8 @@
 [![Live Demo](https://img.shields.io/badge/Demo-Render-blue?style=for-the-badge)](https://flash-cards-app-nc6a.onrender.com)
 ![GitHub last commit](https://img.shields.io/github/last-commit/TKVshnik/flash-cards-app?style=for-the-badge)
 
+🌍 **Рабочее приложение**: [https://flash-cards-app-nc6a.onrender.com](https://flash-cards-app-nc6a.onrender.com)
+
 Приложение для изучения иностранных слов с интерактивными карточками.  
 **Особенность**: система повторений и отслеживание прогресса.
 
@@ -27,6 +29,7 @@
 - **Backend**: Python + Flask
 - **Database**: SQLite (автоматическая инициализация)
 - **Хостинг**: [Render.com](https://render.com) (Free Tier)
+
 
 ## 🛠 Локальный запуск
 ```bash
