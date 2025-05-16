@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Flashcards</title>
+    <link rel="icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Language Flashcards</h1>
+        
+        <!-- Debug panel -->
+        <div id="debug" style="background: #f8f9fa; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
+            <h3 style="margin-top: 0;">System Status</h3>
+            <div id="api-status">API: Checking...</div>
+            <div id="static-status">Static files: Checking...</div>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+            <span id="progressText">0%</span>
+        </div>
+        
+        <div class="menu">
+            <a href="/learn.html" class="btn">Learn Mode</a>
+            <a href="/test.html" class="btn">Test Mode</a>
+        </div>
+        
+        <div class="add-card">
+            <h2>Add New Card</h2>
+            <input type="text" id="frontInput" placeholder="Front (word)">
+            <input type="text" id="backInput" placeholder="Back (translation)">
+            <button onclick="addCard()">Add Card</button>
+        </div>
+
+        <div class="cards-list">
+            <h2>Your Flashcards</h2>
+        <div id="cardsContainer" class="cards-container">
+            <!-- Карточки будут добавляться здесь -->
+        </div>
+    </div>
+
+    <script>
+        // System check
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check API
+            fetch('/api/cards')
+                .then(response => {
+                    document.getElementById('api-status').textContent = 'API: Working';
+                    document.getElementById('api-status').style.color = 'green';
+                    return response.json();
+                })
+                .catch(error => {
+                    document.getElementById('api-status').textContent = 'API: Error - ' + error;
+                    document.getElementById('api-status').style.color = 'red';
+                });
+            
+            // Check static files
+            Promise.all([
+                fetch('/css/style.css'),
+                fetch('/js/api.js'),
+                fetch('/js/main.js')
+            ])
+            .then(() => {
+                document.getElementById('static-status').textContent = 'Static files: Loaded';
+                document.getElementById('static-status').style.color = 'green';
+            })
+            .catch(error => {
+                document.getElementById('static-status').textContent = 'Static files: Error';
+                document.getElementById('static-status').style.color = 'red';
+            });
+        });
+    </script>
+    
+    <script src="/js/api.js"></script>
+    <script src="/js/main.js"></script>
+</body>
+</html>

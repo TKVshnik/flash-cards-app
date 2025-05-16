@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn Mode - Language Flashcards</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        /* Специфичные стили для режима обучения */
+        .learn-container {
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .flashcard {
+            width: 300px;
+            height: 200px;
+            margin: 30px auto;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .flashcard.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .flashcard-front {
+            background: #2196F3;
+            color: white;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .flashcard-back {
+            background: #4CAF50;
+            color: white;
+            font-size: 1.3em;
+            transform: rotateY(180deg);
+        }
+
+        .navigation {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .known-btn, .next-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        .known-btn {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .next-btn {
+            background: #2196F3;
+            color: white;
+        }
+
+        .progress-text {
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Learn Mode</h1>
+
+        <div class="learn-container">
+            <div class="flashcard" id="flashcard">
+                <div class="flashcard-inner">
+                    <div class="flashcard-front" id="cardFront">
+                        Loading...
+                    </div>
+                    <div class="flashcard-back" id="cardBack">
+                        Loading...
+                    </div>
+                </div>
+            </div>
+
+            <div class="navigation">
+                <button class="known-btn" id="knownBtn">I Know It</button>
+                <button class="next-btn" id="nextBtn">Next Card</button>
+            </div>
+
+            <div class="progress-text">
+                Progress: <span id="progressSpan">0</span>/<span id="totalSpan">0</span>
+                (<span id="percentageSpan">0</span>%)
+            </div>
+        </div>
+
+        <div style="margin-top: 30px; text-align: center;">
+            <a href="/" class="btn">Back to Main</a>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script>
+        let cards = [];
+        let currentCardIndex = 0;
+        let unknownCards = [];
+
+        // DOM элементы
+        const flashcard = document.getElementById('flashcard');
+        const cardFront = document.getElementById('cardFront');
+        const cardBack = document.getElementById('cardBack');
+        const knownBtn = document.getElementById('knownBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const progressSpan = document.getElementById('progressSpan');
+        const totalSpan = document.getElementById('totalSpan');
+        const percentageSpan = document.getElementById('percentageSpan');
+
+        // Загрузка карточек
+        async function loadCards() {
+            try {
+                cards = await fetchCards();
+                unknownCards = cards.filter(card => !card.known);
+                updateProgress();
+
+                if (unknownCards.length > 0) {
+                    showCard(0);
+                } else {
+                    cardFront.textContent = 'No cards to learn';
+                    cardBack.textContent = 'Add more cards in main menu';
+                    knownBtn.disabled = true;
+                    nextBtn.disabled = true;
+                }
+            } catch (error) {
+                console.error('Error loading cards:', error);
+                cardFront.textContent = 'Error loading cards';
+                cardBack.textContent = 'Please try again later';
+            }
+        }
+
+        // Показать карточку
+        function showCard(index) {
+            if (index >= 0 && index < unknownCards.length) {
+                currentCardIndex = index;
+                const card = unknownCards[currentCardIndex];
+
+                cardFront.textContent = card.front;
+                cardBack.textContent = card.back;
+                flashcard.classList.remove('flipped');
+
+                // Обновить прогресс
+                updateProgress();
+            }
+        }
+
+        // Обновить прогресс
+        function updateProgress() {
+            const knownCount = cards.filter(card => card.known).length;
+            progressSpan.textContent = knownCount;
+            totalSpan.textContent = cards.length;
+            percentageSpan.textContent = Math.round((knownCount / cards.length) * 100);
+        }
+
+        // Перевернуть карточку
+        flashcard.addEventListener('click', function() {
+            flashcard.classList.toggle('flipped');
+        });
+
+        // Обработчики кнопок
+        knownBtn.addEventListener('click', async function() {
+            if (unknownCards.length === 0) return;
+
+            const cardId = unknownCards[currentCardIndex].id;
+            try {
+                await markCardAsKnown(cardId);
+
+                // Обновить статус карточки в локальном массиве
+                const cardIndex = cards.findIndex(c => c.id === cardId);
+                if (cardIndex !== -1) {
+                    cards[cardIndex].known = 1;
+                }
+
+                // Удалить карточку из unknownCards
+                unknownCards = unknownCards.filter(card => !card.known);
+
+                if (unknownCards.length > 0) {
+                    showCard(Math.min(currentCardIndex, unknownCards.length - 1));
+                } else {
+                    cardFront.textContent = 'All cards learned!';
+                    cardBack.textContent = 'Great job!';
+                    knownBtn.disabled = true;
+                    nextBtn.disabled = true;
+                }
+
+                updateProgress();
+            } catch (error) {
+                console.error('Error marking card as known:', error);
+                alert('Error marking card as known');
+            }
+        });
+
+        nextBtn.addEventListener('click', function() {
+            if (unknownCards.length === 0) return;
+                // Сбрасываем flipped состояние
+                flashcard.classList.remove('flipped');
+                
+                // Показываем следующую карточку
+                const nextIndex = (currentCardIndex + 1) % unknownCards.length;
+                showCard(nextIndex);
+        });
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', loadCards);
+    </script>
+</body>
+</html>
